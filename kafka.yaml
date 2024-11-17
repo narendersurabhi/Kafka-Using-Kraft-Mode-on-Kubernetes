@@ -48,6 +48,62 @@ spec:
   selector:
     app: kafka-app
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-bootstrap-svc
+  namespace: kafka-kraft
+spec:
+  type: NodePort
+  selector:
+    app: kafka-app
+  ports:
+    - port: 9094
+      protocol: TCP
+      nodePort: 30050
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-0-svc
+  namespace: kafka-kraft
+spec:
+  type: NodePort
+  selector:
+    statefulset.kubernetes.io/pod-name: kafka-0
+  ports:
+    - port: 9094
+      protocol: TCP
+      nodePort: 30000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-1-svc
+  namespace: kafka-kraft
+spec:
+  type: NodePort
+  selector:
+    statefulset.kubernetes.io/pod-name: kafka-1
+  ports:
+    - port: 9094
+      protocol: TCP
+      nodePort: 30001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-2-svc
+  namespace: kafka-kraft
+spec:
+  type: NodePort
+  selector:
+    statefulset.kubernetes.io/pod-name: kafka-2
+  ports:
+    - port: 9094
+      protocol: TCP
+      nodePort: 30002
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -72,10 +128,14 @@ spec:
             claimName: kafka-pv-claim
       containers:
         - name: kafka-container
-          image: narendersurabhi/kafka-kraft
+          image: narendersurabhi/kafka-kraft-ex
           ports:
-            - containerPort: 9092
-            - containerPort: 9093
+            - name: internal
+              containerPort: 9092
+            - name: controller
+              containerPort: 9093
+            - name: external
+              containerPort: 9094
           env:
             - name: REPLICAS
               value: '3'
@@ -85,6 +145,10 @@ spec:
               value: kafka-kraft
             - name: SHARE_DIR
               value: /mnt/kafka
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           volumeMounts:
             - name: kafka-storage
               mountPath: /mnt/kafka

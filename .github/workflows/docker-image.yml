@@ -36,4 +36,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/kafka-kraft:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/kafka-kraft-ex:latest
