@@ -31,6 +31,7 @@ spec:
     requests:
       storage: 1Gi
 ---
+# Headless service to provide DNS resolution for brokers.
 apiVersion: v1
 kind: Service
 metadata:
@@ -48,6 +49,7 @@ spec:
   selector:
     app: kafka-app
 ---
+# Option 1: NodePort can also be used as bootstrap-server.
 apiVersion: v1
 kind: Service
 metadata:
@@ -62,6 +64,22 @@ spec:
       protocol: TCP
       nodePort: 30050
 ---
+# Option 2: Loadbalancer can also be used as bootstrap-server. Recommended for Production use.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-bootstrap-lb
+  namespace: kafka-kraft
+spec:
+  type: LoadBalancer
+  selector:
+    app: kafka-app
+  ports:
+    - port: 30060
+      protocol: TCP
+      targetPort: 9094
+---
+# NodePort for node 0 for clients to connect
 apiVersion: v1
 kind: Service
 metadata:
@@ -76,6 +94,7 @@ spec:
       protocol: TCP
       nodePort: 30000
 ---
+# NodePort for node 1 for clients to connect
 apiVersion: v1
 kind: Service
 metadata:
@@ -90,6 +109,7 @@ spec:
       protocol: TCP
       nodePort: 30001
 ---
+# NodePort for node 2 for clients to connect
 apiVersion: v1
 kind: Service
 metadata:
@@ -104,6 +124,7 @@ spec:
       protocol: TCP
       nodePort: 30002
 ---
+# StatefulSet to maintain the pods for kafka
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -145,10 +166,6 @@ spec:
               value: kafka-kraft
             - name: SHARE_DIR
               value: /mnt/kafka
-            - name: NODE_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
           volumeMounts:
             - name: kafka-storage
               mountPath: /mnt/kafka
